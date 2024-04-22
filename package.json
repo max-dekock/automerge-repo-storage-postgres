@@ -2,14 +2,15 @@
   "name": "automerge-repo-storage-postgres",
   "version": "0.0.1",
   "description": "Postgres storage adapter for Automerge Repo",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc && denoify"
   },
   "author": "Maxwell DeKock",
   "license": "MIT",
   "devDependencies": {
     "@types/pg": "^8.11.5",
+    "denoify": "^1.6.9",
     "ts-node": "^10.9.2"
   },
   "dependencies": {
