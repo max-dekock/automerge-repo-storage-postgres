@@ -13,6 +13,19 @@ export function arrayToKey(array: Buffer[]): StorageKey {
   return array.map(a => a.toString("utf8"));
 }
 
+export function keyPrefixRange(keyPrefix: StorageKey): [Buffer[], Buffer[]] {
+  const lowerBound = keyToArray(keyPrefix);
+
+  // make a copy of lowerBound
+  const upperBound = lowerBound.map(buf => Buffer.from(buf));
+
+  // append a null byte to the last element of upperBound
+  // this is the "next" key after all keys prefixed by keyPrefix, sorted lexicographically
+  upperBound[upperBound.length - 1] = Buffer.concat([upperBound[upperBound.length - 1], Buffer.from([0])]);
+  
+  return [lowerBound, upperBound];
+}
+
 export class PostgresStorageAdapter implements StorageAdapterInterface {
   private pool: pg.Pool;
   private tableName: string;
@@ -24,7 +37,9 @@ export class PostgresStorageAdapter implements StorageAdapterInterface {
   
   async load(key: StorageKey): Promise<Uint8Array | undefined> {
     const keyArray = keyToArray(key);
-    const result = await this.pool.query(`select value from ${this.tableName} where key = $1`, [keyArray]);
+    const result = await this.pool.query(
+      `select value from ${this.tableName} where key = $1`,
+      [keyArray]);
     if (result.rows.length == 0) {
       return undefined;
     }
@@ -41,7 +56,9 @@ export class PostgresStorageAdapter implements StorageAdapterInterface {
 
   async remove(key: StorageKey): Promise<void> {
     const keyArray = keyToArray(key);
-    await this.pool.query(`delete from ${this.tableName} where key = $1`, [keyArray]);
+    await this.pool.query(
+      `delete from ${this.tableName} where key = $1`,
+      [keyArray]);
   }
 
   async loadRange(keyPrefix: StorageKey): Promise<Chunk[]> {
@@ -49,12 +66,15 @@ export class PostgresStorageAdapter implements StorageAdapterInterface {
     if (keyPrefix.length == 0) {
       result = await this.pool.query(`select key, value from ${this.tableName}`);
     } else {
-      const lowerBound = keyToArray(keyPrefix);
-      const upperBound = lowerBound.map(buf => Buffer.from(buf));
-      upperBound[upperBound.length - 1] = Buffer.concat([upperBound[upperBound.length - 1], Buffer.from([0])]);
-      result = await this.pool.query(`select key, value from ${this.tableName} where key >= $1 and key < $2`, [lowerBound, upperBound]);
+      const [lowerBound, upperBound] = keyPrefixRange(keyPrefix);
+      result = await this.pool.query(
+        `select key, value from ${this.tableName} where key >= $1 and key < $2`,
+        [lowerBound, upperBound]);
     }
-    return result.rows.map(row => ({ key: arrayToKey(row.key), data: Uint8Array.from(row.value) }));
+    return result.rows.map(row => ({ 
+      key: arrayToKey(row.key),
+      data: Uint8Array.from(row.value)
+    }));
   }
 
   async removeRange(keyPrefix: StorageKey): Promise<void> {
@@ -62,9 +82,9 @@ export class PostgresStorageAdapter implements StorageAdapterInterface {
       await this.pool.query(`delete from ${this.tableName}`);
       return;
     }
-    const lowerBound = keyToArray(keyPrefix);
-    const upperBound = lowerBound.map(buf => Buffer.from(buf));
-    upperBound[upperBound.length - 1] = Buffer.concat([upperBound[upperBound.length - 1], Buffer.from([0])]);
-    await this.pool.query(`delete from ${this.tableName} where key >= $1 and key < $2`, [lowerBound, upperBound]);
+    const [lowerBound, upperBound] = keyPrefixRange(keyPrefix);
+    await this.pool.query(
+      `delete from ${this.tableName} where key >= $1 and key < $2`,
+      [lowerBound, upperBound]);
   }
 }
