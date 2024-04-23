@@ -30,8 +30,12 @@ export class PostgresStorageAdapter implements StorageAdapterInterface {
   private pool: pg.Pool;
   private tableName: string;
 
-  constructor(pool: pg.Pool, tableName: string) {
-    this.pool = pool;
+  constructor(tableName: string, pool?: pg.Pool) {
+    if (pool) {
+      this.pool = pool;
+    } else {
+      this.pool = new pg.Pool();
+    }
     this.tableName = pg.escapeIdentifier(tableName);
   }
   
