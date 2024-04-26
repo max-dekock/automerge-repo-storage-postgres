@@ -2,12 +2,14 @@
   "name": "automerge-repo-storage-postgres",
   "version": "0.0.1",
   "description": "Postgres storage adapter for Automerge Repo",
+  "author": "Maxwell DeKock",
+  "license": "MIT",
+  "homepage": "https://github.com/max-dekock/automerge-repo-storage-postgres",
+  "repository": "https://github.com/max-dekock/automerge-repo-storage-postgres.git",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && denoify"
   },
-  "author": "Maxwell DeKock",
-  "license": "MIT",
   "devDependencies": {
     "@types/pg": "^8.11.5",
     "denoify": "^1.6.9",
