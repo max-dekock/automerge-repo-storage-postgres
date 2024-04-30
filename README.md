@@ -45,7 +45,7 @@ The storage table should have the following columns:
 
 ```sql
 CREATE TABLE my_table (
-    key ARRAY[BYTEA] PRIMARY KEY,
+    key BYTEA[] PRIMARY KEY,
     value BYTEA NOT NULL
 );
 ```
